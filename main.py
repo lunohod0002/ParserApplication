@@ -11,7 +11,7 @@ class ProductScraper:
     def __init__(self, urls):
         self.urls = urls
         self.products_data = []
-        self.SEM_LIMIT = 10  # Ограничение на количество одновременных работующих потоков
+        self.SEM_LIMIT = 10  # Ограничение на количество одновременно работующих потоков
 
     async def get_product_data(self, session, url, page):
         """Получение данных о продуктах с указанной страницы."""
@@ -125,4 +125,4 @@ if __name__ == "__main__":
     ]
 
     scraper = ProductScraper(urls)  # Создаем экземпляр класса ProductScraper
-    scraper.run()  # Запускаем сбор данных
+    scraper.run_and_save_to_json()  # Запускаем сбор данных
