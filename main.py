@@ -49,12 +49,12 @@ class ProductScraper:
                     # Добавляение собранные данных в итоговый список
                     self.products_data.append({
                         "brand": brand,
-                        "product_name": product_name,
+                        "name": product_name,
                         "price": price,
                         "in_stock": in_stock,
-                        "product_id": product_id,
-                        "product_type": product_type,
-                        "images": image_urls,
+                        "id": product_id,
+                        "type": product_type,
+                        "photos": image_urls,
                     })
                 print(f"[INFO] Обработал страницу {page} по {full_url}")
         except Exception as e:
