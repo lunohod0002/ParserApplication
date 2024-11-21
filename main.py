@@ -110,8 +110,6 @@ class ProductScraper:
             except Exception as e:
                 print(f"[ERROR] Ошибка  {e}")
             count += 1
-            print(f"[ITERATION] Счетчик  {count}")
-
 
     async def repeat_requests_to_categories(self):
         """Повтор поиска товаров по категориям, завершившихся с ошибкой."""
