@@ -134,9 +134,27 @@ class ProductScraper:
 
 
 if __name__ == "__main__":
-    urls = [
-        'https://goldapple.ru/makijazh'
+        urls = [
+        'https://goldapple.ru/makijazh',
+        'https://goldapple.ru/uhod',
+        'https://goldapple.ru/volosy',
+        'https://goldapple.ru/parfjumerija',
+        'https://goldapple.ru/zdorov-e-i-apteka',
+        'https://goldapple.ru/sexual-wellness',
+        'https://goldapple.ru/azija',
+        'https://goldapple.ru/organika',
+        'https://goldapple.ru/dlja-muzhchin',
+        'https://goldapple.ru/dlja-detej',
+        'https://goldapple.ru/tehnika',
+        'https://goldapple.ru/dlja-doma',
+        'https://goldapple.ru/odezhda-i-aksessuary',
+        'https://goldapple.ru/nizhnee-bel-jo',
+        'https://goldapple.ru/ukrashenija',
+        'https://goldapple.ru/mini-formaty',
+        'https://goldapple.ru/tovary-dlja-zhivotnyh',
+        'https://goldapple.ru/promo',
     ]
+
 
     scraper = ProductScraper(urls)
     scraper.run_and_save_to_json()
