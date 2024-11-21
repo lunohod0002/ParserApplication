@@ -4,6 +4,8 @@ import aiohttp
 import asyncio
 import json
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
+
 
 class ProductScraper:
 
@@ -15,7 +17,6 @@ class ProductScraper:
         self.exception_tasks_categories = set()
 
     async def get_product_data(self, session, url, page):
-        """Получение данных о продуктах с указанной страницы."""
         try:
             full_url = f"{url}?p={page}"
             async with session.get(url=full_url) as response:
@@ -26,12 +27,10 @@ class ProductScraper:
                     price = price_meta['content'] if price_meta else None
 
                     brand_meta = article.find('span', itemprop='brand').find('meta', itemprop='name')
-                    brand_span = article.find('span', class_='Padcv')
-                    brand = brand_meta['content'] if brand_meta else (
-                        brand_span.get_text(strip=True) if brand_span else None)
+                    brand = brand_meta['content'] if brand_meta else None
 
-                    name_span = article.find('span', class_='KkVNn')
-                    product_name = name_span.get_text(strip=True) if name_span else None
+                    name_meta = article.find_all('meta', itemprop='name')
+                    product_name = name_meta[1]['content'] if ['content'] else None
 
                     availability_meta = article.find('meta', itemprop='availability')
                     in_stock = availability_meta[
@@ -40,8 +39,8 @@ class ProductScraper:
                     sku_meta = article.find('meta', itemprop='sku')
                     product_id = sku_meta['content'] if sku_meta else None
 
-                    product_type_div = article.find('div', class_='_7uTPQ')
-                    product_type = product_type_div.get_text(strip=True) if product_type_div else None
+                    type = article.find('span', itemprop='brand').find('meta',
+                                                                       itemprop='name').parent.parent.find_previous().find_previous().text.strip()
 
                     images = article.find_all('source', type='image/jpeg')
                     image_urls = [img['srcset'] for img in images]
@@ -52,15 +51,15 @@ class ProductScraper:
                         "price": price,
                         "in_stock": in_stock,
                         "id": product_id,
-                        "type": product_type,
+                        "type": type,
                         "photos": image_urls,
                     })
         except Exception as e:
             self.exception_tasks.add((url, page))
-            print(f"[ERROR] Ошибка на {url} и {page}: {e}")
+          #  print(f"[ERROR] Ошибка на {url} и {page}: {e}")
 
     async def gather_data(self, url, sem):
-        """Собираем данные с одного URL, соблюдая лимит на количество потоков."""
+
         async with sem:
             try:
                 async with aiohttp.ClientSession(trust_env=True) as session:
@@ -84,15 +83,12 @@ class ProductScraper:
             except Exception as e:
                 self.exception_tasks_categories.add(url)
 
-
     async def gather_all_urls(self):
-        """Запуск процесса сбора данных."""
         sem = asyncio.Semaphore(self.SEM_LIMIT)
         tasks = [self.gather_data(url, sem) for url in self.urls]
-        res =await asyncio.gather(*tasks)
+        res = await asyncio.gather(*tasks)
 
     async def repeat_requests_to_pages(self):
-        """Повтор поиска товаров на страницах, завершившихся с ошибкой."""
         sem = asyncio.Semaphore(self.SEM_LIMIT)
         count = 0
         while True:
@@ -110,9 +106,9 @@ class ProductScraper:
             except Exception as e:
                 print(f"[ERROR] Ошибка  {e}")
             count += 1
+            print(f"[ITERATION] Счетчик  {count}")
 
     async def repeat_requests_to_categories(self):
-        """Повтор поиска товаров по категориям, завершившихся с ошибкой."""
         sem = asyncio.Semaphore(self.SEM_LIMIT)
         count = 0
         while True:
@@ -126,39 +122,21 @@ class ProductScraper:
             count += 1
 
     async def run(self):
-        """Отдельная функция для запуска сбора данных"""
         await self.gather_all_urls()
         await self.repeat_requests_to_pages()
         await self.repeat_requests_to_categories()
 
     def run_and_save_to_json(self):
-        """Запуск процесса сбора данных."""
         asyncio.run(self.run())
         with open('products.jsonl', 'w', encoding='utf-8') as jsonl_file:
             for product in self.products_data:
                 jsonl_file.write(json.dumps(product, ensure_ascii=False) + '\n')
 
+
 if __name__ == "__main__":
     urls = [
-        'https://goldapple.ru/makijazh',
-        'https://goldapple.ru/uhod',
-        'https://goldapple.ru/volosy',
-        'https://goldapple.ru/parfjumerija',
-        'https://goldapple.ru/zdorov-e-i-apteka',
-        'https://goldapple.ru/sexual-wellness',
-        'https://goldapple.ru/azija',
-        'https://goldapple.ru/organika',
-        'https://goldapple.ru/dlja-muzhchin',
-        'https://goldapple.ru/dlja-detej',
-        'https://goldapple.ru/tehnika',
-        'https://goldapple.ru/dlja-doma',
-        'https://goldapple.ru/odezhda-i-aksessuary',
-        'https://goldapple.ru/nizhnee-bel-jo',
-        'https://goldapple.ru/ukrashenija',
-        'https://goldapple.ru/mini-formaty',
-        'https://goldapple.ru/tovary-dlja-zhivotnyh',
-        'https://goldapple.ru/promo',
+        'https://goldapple.ru/makijazh'
     ]
 
-    scraper = ProductScraper(urls)  
-    scraper.run_and_save_to_json()  
+    scraper = ProductScraper(urls)
+    scraper.run_and_save_to_json()
